@@ -1,0 +1,17 @@
+<GridLayout rows="*">
+    <RadListView [items]="resultItems" loadOnDemandMode="Auto" [items]="resultItems" (loadMoreDataRequested)="onLoadMoreItemsRequested($event)"
+        [listViewLayout]="layout">
+        <template listItemTemplate let-item="item">
+            <GridLayout rows="*, auto" backgroundColor="red">
+                <GridLayout rows='*,auto' margin="10" backgroundColor="#b5b0ff" borderRadius='5'>
+                    <Image row=0 [src]="item.imageUrl" stretch="none"></Image>
+                    <Label row=1 [text]="item.blogName" style="padding: 5 0 10 0; font-size: 13; font-weight: bold; color: white;"></Label>
+                </GridLayout>
+            </GridLayout>
+        </template>
+        <StackLayout *listLoadOnDemandTemplate height=100>
+            <Label text="POOP"></Label>
+
+        </StackLayout>
+    </RadListView>
+</GridLayout>
