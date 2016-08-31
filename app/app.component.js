@@ -4,20 +4,22 @@ var http_1 = require('@angular/http');
 require("rxjs/add/operator/do");
 require("rxjs/add/operator/map");
 var listViewModule = require("nativescript-telerik-ui/listview");
-var observable_array_1 = require("data/observable-array");
 var AppComponent = (function () {
     function AppComponent(http, changeDetectionRef) {
         this.http = http;
         this.changeDetectionRef = changeDetectionRef;
-        this.api_key = "sk687FiqrYijZ3HNHT6Gm4kSYMgDguJpuvdS6tZW972GzBrnVg";
-        this.tag = "g-eazy";
+        this.items = [];
+        this.api_key = "fuiKNFp9vQFvjLNvx4sUwti4Yb5yGutBN4Xh10LXZhhRKjWlV4";
+        this.tag = "lol";
         this.tumblr_getTagged = "https://api.tumblr.com/v2/tagged";
     }
-    AppComponent.prototype.getInfo = function (before) {
+    AppComponent.prototype.getData = function (before) {
         var tumblrOptions = new http_1.URLSearchParams();
         tumblrOptions.set("api_key", this.api_key);
         tumblrOptions.set("tag", this.tag);
-        tumblrOptions.set("before", '${before}');
+        if (typeof before !== 'undefined') {
+            tumblrOptions.set("before", this.before);
+        }
         return this.http.get(this.tumblr_getTagged, { search: tumblrOptions })
             .map(function (res) { return res.json(); })
             .map(function (data) { return data.response; })
@@ -33,31 +35,35 @@ var AppComponent = (function () {
             });
         });
     };
-    AppComponent.prototype.onLoadMoreItemsRequested = function (args) {
+    AppComponent.prototype.load = function (before, args) {
         var _this = this;
-        console.log('load more');
-        this.isBusy = true;
-        var listView = args.object;
-        this.getInfo(this.resultItems.slice(-1)[0].timestamp)
-            .subscribe(function (items) {
-            _this.resultItems = _this.resultItems.concat(items);
-            listView.notifyLoadOnDemandFinished(); // API req - notify the event handler prolly 
-            _this.isBusy = false;
+        this.getData(before).subscribe(function (data) {
+            _this.items = _this.items.concat(data);
+            _this.before = data.slice(-1)[0].timestamp;
+            _this.error = false;
+            if (typeof before === 'undefined') {
+                _this.changeDetectionRef.detectChanges();
+            }
+            else {
+                var listView = args.object;
+                listView.notifyLoadOnDemandFinished();
+                args.returnValue = true;
+            }
+        }, function (err) {
+            console.log(err);
+            _this.error = true;
+            _this.before = _this.before + 1;
+            // this.load(this.before);
         });
-        args.returnValue = true; // API req 
+    };
+    AppComponent.prototype.onLoadMoreItemsRequested = function (args) {
+        this.load(this.before, args);
     };
     AppComponent.prototype.ngOnInit = function () {
-        var _this = this;
         this.layout = new listViewModule.ListViewLinearLayout(); //Needs to be the first to initiate 
         this.layout.scrollDirection = "Vertical";
         this.layout.itemHeight = 400;
-        this.getInfo()
-            .subscribe(function (items) {
-            _this.resultItems = new observable_array_1.ObservableArray(items);
-            _this.changeDetectionRef.detectChanges();
-            // console.dump(this.resultItems);
-            //console.dump(this.resultItems.slice(-1)[0].timestamp);
-        });
+        this.load();
     };
     AppComponent = __decorate([
         core_1.Component({

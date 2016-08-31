@@ -14,17 +14,22 @@ import { ObservableArray } from "data/observable-array"
 export class AppComponent {
 
   constructor(private http: Http, private changeDetectionRef: ChangeDetectorRef) { }
-  private resultItems
+  private items = [];
   private layout: listViewModule.ListViewLinearLayout;
-  private api_key = "sk687FiqrYijZ3HNHT6Gm4kSYMgDguJpuvdS6tZW972GzBrnVg";
-  private tag = "g-eazy";
+  private api_key = "fuiKNFp9vQFvjLNvx4sUwti4Yb5yGutBN4Xh10LXZhhRKjWlV4";
+  private tag = "lol";
   private tumblr_getTagged = "https://api.tumblr.com/v2/tagged";
+  private before;
   private isBusy: boolean;
-  getInfo(before?: number): Observable<any[]> {
+  private error: boolean;
+
+  getData(before?: number): Observable<any[]> {
     var tumblrOptions = new URLSearchParams();
     tumblrOptions.set("api_key", this.api_key);
     tumblrOptions.set("tag", this.tag);
-    tumblrOptions.set("before", '${before}')
+    if (typeof before !== 'undefined') {
+      tumblrOptions.set("before", this.before);
+    }
 
     return this.http.get(this.tumblr_getTagged, { search: tumblrOptions })
       .map(res => res.json())
@@ -42,31 +47,36 @@ export class AppComponent {
       })
   }
 
+  load(before?: number, args?: listViewModule.ListViewEventData) {
+    this.getData(before).subscribe(data => {
+      this.items = this.items.concat(data);
+      this.before = data.slice(-1)[0].timestamp;
+      this.error = false;
+      if (typeof before === 'undefined') {
+        this.changeDetectionRef.detectChanges();
+      } else {
+        var listView: listViewModule.RadListView = args.object;
+        listView.notifyLoadOnDemandFinished();
+        args.returnValue = true;
+      }
+    },
+    err => {
+      console.log(err);
+      this.error = true;
+      this.before = this.before + 1;
+      // this.load(this.before);
+    });
+  }
+
   public onLoadMoreItemsRequested(args: listViewModule.ListViewEventData) {
-    console.log('load more');
-    this.isBusy = true;
-    var listView: listViewModule.RadListView = args.object;
-    this.getInfo(this.resultItems.slice(-1)[0].timestamp)
-      .subscribe(items => {
-        this.resultItems = this.resultItems.concat(items);
-        listView.notifyLoadOnDemandFinished(); // API req - notify the event handler prolly 
-        this.isBusy = false;
-      })
-    args.returnValue = true; // API req 
+    this.load(this.before, args);
   }
 
   ngOnInit() {
     this.layout = new listViewModule.ListViewLinearLayout(); //Needs to be the first to initiate 
     this.layout.scrollDirection = "Vertical";
     this.layout.itemHeight = 400;
-
-    this.getInfo()
-      .subscribe(items => {
-        this.resultItems = new ObservableArray(items);
-        this.changeDetectionRef.detectChanges();
-        // console.dump(this.resultItems);
-        //console.dump(this.resultItems.slice(-1)[0].timestamp);
-      });
+    this.load();
   }
 }
 

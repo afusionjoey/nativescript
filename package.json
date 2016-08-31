@@ -7,6 +7,9 @@
     "id": "org.nativescript.test",
     "tns-ios": {
       "version": "2.1.1"
+    },
+    "tns-android": {
+      "version": "2.2.0"
     }
   },
   "dependencies": {
@@ -25,6 +28,10 @@
     "tumblr.js": "^1.1.0"
   },
   "devDependencies": {
+    "babel-traverse": "6.14.0",
+    "babel-types": "6.14.0",
+    "babylon": "6.9.1",
+    "lazy": "1.0.11",
     "nativescript-dev-typescript": "^0.3.2",
     "typescript": "^1.8.10"
   }
